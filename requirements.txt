@@ -2,3 +2,6 @@ aiogram
 aiohttp
 python-dotenv
 asyncio
+sqlite3
+pathlib
+datetime
