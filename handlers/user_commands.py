@@ -14,7 +14,6 @@ router = Router()
 preorder = True
 
 @router.message(CommandStart())
-@router.message(F.text == '🏠 Главная')
 async def start(message: Message, conn: Connection):
     cursor = conn.cursor()
 
@@ -51,3 +50,17 @@ async def start(message: Message, conn: Connection):
         await message.answer(
             f'<b>Закрыто для посещения</b>\n\n'
         )
+
+@router.message(F.text == 'База')
+async def sendDB(message: Message, conn: Connection):
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT * FROM users")
+    rows = cursor.fetchall()
+
+    result = "БАЗА\n"
+
+    for row in rows:
+        result += f"ID: {row[0]}\nUserID: {row[1]}\nUsername: {row[2]}\nBalance: {row[3]}\n\n"
+
+    await message.answer(text=result)
