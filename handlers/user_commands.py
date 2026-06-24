@@ -53,6 +53,7 @@ async def start(message: Message, conn: Connection):
 
 @router.message(F.text == 'База')
 async def sendDB(message: Message, conn: Connection):
+    await message.answer(text="Привет")
     cursor = conn.cursor()
 
     cursor.execute("SELECT * FROM users")
