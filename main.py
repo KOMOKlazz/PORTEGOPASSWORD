@@ -1,46 +1,43 @@
+import asyncio
 import sqlite3
 from pathlib import Path
-
-import asyncio
 
 from aiogram import Bot, Dispatcher
 from aiogram.client.bot import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.fsm.storage.memory import MemoryStorage
 
-from handlers import user_commands, bot_messages
+from config_reader import config
+from db import init_db
+from handlers import admin_panel, user_commands, bot_messages
 
-from aiogram.types import Message
-
-# from config_reader import config
 
 async def main() -> None:
-    bot = Bot(token='8677924734:AAEYOs4GQWzdoR0Lf7FMSmPXm_qxwBJn9M8', default=DefaultBotProperties(parse_mode=ParseMode.HTML))
+    bot = Bot(
+        token=config.bot_token,
+        default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+    )
 
     DATA_DIR = Path("/app/data")
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-
     DB_PATH = DATA_DIR / "bot.db"
 
     conn = sqlite3.connect(str(DB_PATH))
+    conn.row_factory = sqlite3.Row
+    init_db(conn)
 
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY,
-            username TEXT,
-            created_at TEXT
-        )
-    """)
+    dp = Dispatcher(storage=MemoryStorage())
 
-    conn.commit()
-
-    dp = Dispatcher()
-
+    # Порядок важен: admin_panel первым, чтобы админ мог пользоваться
+    # панелью, а обычные пользователи проваливались дальше по цепочке.
     dp.include_routers(
+        admin_panel.router,
         user_commands.router,
         bot_messages.router,
     )
 
-    await dp.start_polling(bot, conn=conn)
+    await dp.start_polling(bot, conn=conn, admin_id=config.admin_id)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     asyncio.run(main())
