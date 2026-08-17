@@ -3,6 +3,17 @@ from sqlite3 import Connection, Row
 from typing import Optional
 
 
+def _ensure_column(conn: Connection, table: str, column: str, column_def: str) -> None:
+    """Добавляет колонку, если её ещё нет — нужно для БД, созданных до этого изменения."""
+    cursor = conn.cursor()
+    cursor.execute(f"PRAGMA table_info({table})")
+    existing_columns = {row[1] for row in cursor.fetchall()}
+
+    if column not in existing_columns:
+        conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {column_def}")
+        conn.commit()
+
+
 def init_db(conn: Connection) -> None:
     conn.execute("""
         CREATE TABLE IF NOT EXISTS users (
@@ -26,10 +37,13 @@ def init_db(conn: Connection) -> None:
     """)
     conn.commit()
 
+    # Миграция для БД, созданных до добавления списка пользователей.
+    _ensure_column(conn, "users", "full_name", "TEXT")
+
 
 # --- users ---
 
-def add_user(conn: Connection, user_id: int, username: Optional[str]) -> bool:
+def add_user(conn: Connection, user_id: int, username: Optional[str], full_name: Optional[str]) -> bool:
     """Добавляет пользователя, если его нет. Возвращает True, если он новый."""
     cursor = conn.cursor()
     cursor.execute("SELECT id FROM users WHERE id = ?", (user_id,))
@@ -37,14 +51,18 @@ def add_user(conn: Connection, user_id: int, username: Optional[str]) -> bool:
 
     if existing is None:
         conn.execute(
-            "INSERT INTO users (id, username, created_at, is_active) VALUES (?, ?, ?, 1)",
-            (user_id, username, datetime.date.today().isoformat()),
+            "INSERT INTO users (id, username, full_name, created_at, is_active) VALUES (?, ?, ?, ?, 1)",
+            (user_id, username, full_name, datetime.date.today().isoformat()),
         )
         conn.commit()
         return True
 
-    # Если пользователь раньше заблокировал бота и вернулся — реактивируем.
-    conn.execute("UPDATE users SET is_active = 1, username = ? WHERE id = ?", (username, user_id))
+    # Если пользователь раньше заблокировал бота и вернулся — реактивируем
+    # и заодно обновляем ник/имя (могли поменяться).
+    conn.execute(
+        "UPDATE users SET is_active = 1, username = ?, full_name = ? WHERE id = ?",
+        (username, full_name, user_id),
+    )
     conn.commit()
     return False
 
@@ -72,6 +90,15 @@ def get_users_count(conn: Connection) -> tuple[int, int]:
 def get_all_users_raw(conn: Connection) -> list[Row]:
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM users")
+    return cursor.fetchall()
+
+
+def get_all_users_list(conn: Connection) -> list[Row]:
+    """Список пользователей (username, full_name) для вывода админу, новые сверху."""
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT id, username, full_name, is_active FROM users ORDER BY created_at DESC, id DESC"
+    )
     return cursor.fetchall()
 
 

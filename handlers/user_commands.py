@@ -15,7 +15,12 @@ preorder = True
 
 @router.message(CommandStart())
 async def start(message: Message, conn: Connection) -> None:
-    is_new = db.add_user(conn, message.from_user.id, message.from_user.username)
+    is_new = db.add_user(
+        conn,
+        message.from_user.id,
+        message.from_user.username,
+        message.from_user.full_name,
+    )
 
     if is_new:
         print(f"Пользователь добавлен: {message.from_user.id}")

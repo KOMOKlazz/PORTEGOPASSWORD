@@ -5,6 +5,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 def main_panel_kb() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="✏️ Редактор следующего сообщения", callback_data="panel:editor")
+    builder.button(text="📋 Список пользователей", callback_data="panel:user_list")
     builder.adjust(1)
     return builder.as_markup()
 
@@ -38,6 +39,13 @@ def confirm_broadcast_kb() -> InlineKeyboardMarkup:
 def cancel_kb() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     builder.button(text="❌ Отмена", callback_data="editor:cancel")
+    builder.adjust(1)
+    return builder.as_markup()
+
+
+def back_to_panel_kb() -> InlineKeyboardMarkup:
+    builder = InlineKeyboardBuilder()
+    builder.button(text="⬅️ Назад", callback_data="panel:back")
     builder.adjust(1)
     return builder.as_markup()
 

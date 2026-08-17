@@ -9,6 +9,7 @@ from aiogram.types import CallbackQuery, Message
 import db
 from filters import IsAdmin
 from keyboards import (
+    back_to_panel_kb,
     cancel_kb,
     confirm_broadcast_kb,
     draft_button_markup,
@@ -29,6 +30,9 @@ router.callback_query.filter(IsAdmin())
 # Задержка между сообщениями при рассылке.
 # 0.05с ≈ 20 сообщений/сек — с запасом от общего лимита Telegram (~30/сек).
 BROADCAST_DELAY = 0.05
+
+# Лимит Telegram на длину сообщения — 4096 символов, берём с запасом.
+MAX_MESSAGE_CHARS = 3500
 
 
 def _draft_preview_text(draft) -> str:
@@ -73,6 +77,41 @@ async def open_editor(call: CallbackQuery, conn: Connection) -> None:
     text = "<b>Редактор следующего сообщения</b>\n\n" + _draft_preview_text(draft)
     await call.message.edit_text(text, reply_markup=editor_menu_kb(has_draft, has_button))
     await call.answer()
+
+
+# --- список пользователей ---
+
+@router.callback_query(F.data == "panel:user_list")
+async def send_user_list(call: CallbackQuery, conn: Connection) -> None:
+    users = db.get_all_users_list(conn)
+
+    if not users:
+        await call.answer("В базе пока нет пользователей", show_alert=True)
+        return
+
+    await call.answer()
+
+    lines = []
+    for i, user in enumerate(users, start=1):
+        name = user["full_name"] or "(без имени)"
+        username = f"@{user['username']}" if user["username"] else "без ника"
+        mark = "" if user["is_active"] else " ❌"
+        lines.append(f"{i}. {name} — {username}{mark}")
+
+    header = f"<b>Пользователи ({len(users)})</b>\n❌ — заблокировал бота\n\n"
+
+    chunk = header
+    for line in lines:
+        # +1 на перевод строки
+        if len(chunk) + len(line) + 1 > MAX_MESSAGE_CHARS:
+            await call.message.answer(chunk)
+            chunk = ""
+        chunk += line + "\n"
+
+    if chunk.strip():
+        await call.message.answer(chunk)
+
+    await call.message.answer("Готово.", reply_markup=back_to_panel_kb())
 
 
 # --- поиск поста по ссылке ---
