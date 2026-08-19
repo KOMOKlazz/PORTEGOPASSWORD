@@ -9,7 +9,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 
 from config_reader import config
 from db import init_db
-from handlers import admin_panel, user_commands, bot_messages
+import admin_panel, user_commands, bot_messages
 
 
 async def main() -> None:
