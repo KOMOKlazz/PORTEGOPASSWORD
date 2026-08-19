@@ -27,14 +27,14 @@ async def start(message: Message, conn: Connection) -> None:
     else:
         print(f"Пользователь уже в базе: {message.from_user.id}")
 
-    if preorder:
-        await message.bot.copy_message(
-            chat_id=message.chat.id,
-            from_chat_id="@testoport",
-            message_id=2,
-        )
-    else:
-        await message.answer("<b>Закрыто для посещения</b>\n\n")
+    # if preorder:
+    #     await message.bot.copy_message(
+    #         chat_id=message.chat.id,
+    #         from_chat_id="@testoport",
+    #         message_id=2,
+    #     )
+    # else:
+    #     await message.answer("<b>Закрыто для посещения</b>\n\n")
 
 
 @router.message(F.text == "База")

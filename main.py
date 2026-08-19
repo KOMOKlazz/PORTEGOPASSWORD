@@ -18,7 +18,10 @@ async def main() -> None:
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
-    DATA_DIR = Path("/app/data")
+    # Папка для БД — всегда рядом с этим файлом (main.py), независимо от того,
+    # на Windows это, на Linux или в Docker. Раньше был захардкожен "/app/data",
+    # что на Windows превращалось в C:\app\data и терялось из виду.
+    DATA_DIR = Path(__file__).resolve().parent / "data"
     DATA_DIR.mkdir(parents=True, exist_ok=True)
     DB_PATH = DATA_DIR / "bot.db"
 
