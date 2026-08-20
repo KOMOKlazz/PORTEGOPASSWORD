@@ -15,15 +15,18 @@ import os
 
 
 async def main() -> None:
+    print("1")
     from dotenv import load_dotenv
 
     load_dotenv()
-    TOKEN = os.getenv('BOT_TG_TOKEN')
+    TOKEN = os.getenv('BOT_TOKEN')
 
     bot = Bot(
         token=TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
+
+    print("2")
 
     # Папка для БД — всегда рядом с этим файлом (main.py), независимо от того,
     # на Windows это, на Linux или в Docker. Раньше был захардкожен "/app/data",
