@@ -37,7 +37,8 @@ def init_db(conn: Connection) -> None:
     """)
     conn.commit()
 
-    # Миграция для БД, созданных до добавления списка пользователей.
+    # Миграции для БД, созданных более старыми версиями кода.
+    _ensure_column(conn, "users", "is_active", "INTEGER NOT NULL DEFAULT 1")
     _ensure_column(conn, "users", "full_name", "TEXT")
 
 
