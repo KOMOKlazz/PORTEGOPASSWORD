@@ -11,10 +11,17 @@ from config_reader import config
 from db import init_db
 import admin_panel, user_commands, bot_messages
 
+import os
+
 
 async def main() -> None:
+    from dotenv import load_dotenv
+
+    load_dotenv()
+    TOKEN = os.getenv('BOT_TG_TOKEN')
+
     bot = Bot(
-        token=config.bot_token,
+        token=TOKEN,
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
